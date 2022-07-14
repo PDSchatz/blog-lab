@@ -1,4 +1,6 @@
 const Express = require('express')
+const db = require('./db/pokemon.json')
+const shapes = require('./db/pokemonClass')
 const app = Express()
 const PORT = 4000
 
@@ -10,31 +12,65 @@ app.get('/', (_, res) => {
 })
 
 app.get('/pokemon', (_, res) => {
-  //get all pokemons
-
-  res.status(200).send()
+  res.status(200).send(db)
 })
 
 app.get('/pokemon/:id', (req, res) => {
-  //get pokemon by id
-  let pokemon = req.params.id
-
-  res.status(200).send()
+  let pokemonId = req.params.id
+  let foundPokemon = null
+  for(let pokemon of db){
+    if(pokemon.id === parseInt(pokemonId)){
+      foundPokemon = pokemon
+      break;
+    }
+  }
+  if(foundPokemon){
+    res.status(200).json(foundPokemon)
+  } else {
+    res.status(404).send('no pokemon of that ID was found')
+  }
 })
 
 app.get('/search', (req, res) => {
-  let pokemonToSearch = req.query
-
-
-  res.status(200).send()
+  if(Object.keys(req.query).length == 0){
+    res.status(406).send("you need to include search queries!")
+  } else {
+    let pokemonToSearch = req.query
+    let searchObj = new shapes.Pokemon()
+    let searchTerms = Object.keys(searchObj).filter(term => {
+      if(Object.keys(pokemonToSearch).includes(term)){
+        return term
+      }
+    })
+    let foundPokemon = []
+  
+    for(let pokemon of db){
+      searchTerms.forEach(term => {
+        if(pokemonToSearch[term] == pokemon[term]){
+          foundPokemon.push(pokemon)
+        }
+      })
+    }
+  
+    if(foundPokemon.length > 0){
+      res.status(200).json(foundPokemon)
+    } else {
+      res.status(404).send("no pokemon matching your search queries could be found...")
+    }
+  }
 })
 
 app.post('/pokemon', (req, res) => {
-  const pokemonToWrite = req.body
-
-  res.status(200).send({
-    msg: "success!"
-  })
+  if(Object.keys(req.body).length === 0){
+    res.status(406).send('no body was included...')
+  } else {
+    const pokemonToWrite = req.body
+    let newPokemon = new shapes.Pokemon
+  
+    res.status(200).send({
+      msg: "success!"
+    })
+  }
 })
 
 app.listen(PORT, () => {
