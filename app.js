@@ -1,4 +1,5 @@
 const Express = require('express')
+const fs = require('fs')
 const db = require('./db/pokemon.json')
 const shapes = require('./db/pokemonClass')
 const app = Express()
@@ -66,10 +67,33 @@ app.post('/pokemon', (req, res) => {
   } else {
     const pokemonToWrite = req.body
     let newPokemon = new shapes.Pokemon
-  
-    res.status(200).send({
-      msg: "success!"
-    })
+
+    if(Object.keys(pokemonToWrite).length !== Object.keys(newPokemon).length){
+      res.status(406).send(`it doesn't look like you've included enough data...`)
+    } else {
+      //here I would check for dupes, but I am lazy and the instructions didn't say that...
+      for( let [key, value] of Object.entries(pokemonToWrite) ){
+        if(Object.hasOwn(newPokemon, key)){
+          newPokemon[key] = value
+        } else {
+          console.log(`hmmm what's going on with this object copy?`)
+        }
+      }
+
+      fs.readFile('./db/pokemon.json', (err, data) => {
+        let json = JSON.parse(data)
+        json.push(newPokemon)
+        fs.writeFile('./db/pokemon.json', JSON.stringify(json), function(err){
+          if(err){
+            console.log(err)
+            res.status(500).send('something went wrong writing to db')
+          } else {
+            res.status(500).json(json)
+          }
+        })
+      })
+      
+    }
   }
 })
 
